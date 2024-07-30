@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin21
+    ports:
+      - 5431:5432
+    networks:
+      - app-network
+    volumes:
+      - ./data:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  go_friends:
+    image: adamanq/gofriends:latest
+    container_name: go_friends
+    environment:
+      DATABASE_URL: postgres://postgres:admin21@db:5432/go_friends
+    ports:
+      - 8082:8082
+    depends_on:
+      - db
+    networks:
+      - app-network
+  access_cloude:
+    image: adamanq/access:latest
+    container_name: access_cloude
+    environment:
+      DATABASE_URL: postgres://postgres:admin21@db:5432/access_cloude
+    ports:
+      - 8081:8081
+    depends_on:
+      - db
+    networks:
+      - app-network
+networks:
+  app-network:

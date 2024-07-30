@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -12,10 +13,15 @@ type Database struct {
 	Salt string
 }
 
-func NewDatabase(url string) *Database {
+func NewDatabase() *Database {
 	ctx := context.Background()
 
-	config, err := pgxpool.ParseConfig(url)
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL is not set")
+	}
+
+	config, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
 		log.Fatalf("Unable to parse configuration: %v", err)
 		return nil

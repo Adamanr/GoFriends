@@ -3,7 +3,6 @@ package main
 import (
 	"accessCloude/internal/config"
 	"accessCloude/internal/storage"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -33,8 +32,7 @@ func main() {
 	swagger.Servers = nil
 	r := chi.NewRouter()
 
-	urlExample := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", cfg.DB.User, cfg.DB.Password, cfg.DB.Host, cfg.DB.Port, cfg.DB.Database)
-	db := storage.NewDatabase(urlExample)
+	db := storage.NewDatabase()
 
 	accessCloude := api.NewAccessCloude(db)
 	r.Use(cors.Handler(cors.Options{
@@ -56,6 +54,6 @@ func main() {
 		Addr:    net.JoinHostPort(cfg.CS.Host, cfg.CS.Port),
 	}
 
-	slog.Info("Starting server")
+	slog.Info("Starting server on", cfg.CS.Host, cfg.CS.Port)
 	log.Fatal(s.ListenAndServe())
 }
