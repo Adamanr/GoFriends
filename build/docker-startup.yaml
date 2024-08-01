@@ -46,6 +46,8 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin21
     networks:
       - app-network
+    ports:
+      - 27017:27017
   mongo-express:
     image: mongo-express
     restart: always
