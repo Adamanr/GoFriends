@@ -38,5 +38,25 @@ services:
       - db
     networks:
       - app-network
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: admin21
+    networks:
+      - app-network
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8083:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:admin21@mongo:27017/
+      ME_CONFIG_BASICAUTH: false
+    networks:
+      - app-network
 networks:
   app-network:
