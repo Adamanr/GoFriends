@@ -1,25 +1,37 @@
 package storage
 
 import (
+	"accessCloude/internal/config"
 	"context"
+	"fmt"
 	"log"
-	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type Database struct {
-	Conn *pgxpool.Pool
-	Salt string
+	PConn *pgxpool.Pool
+	MConn *minio.Client
+	Salt  string
 }
 
-func NewDatabase() *Database {
+func NewDatabase(cfg *config.Config) *Database {
 	ctx := context.Background()
 
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		log.Fatal("DATABASE_URL is not set")
+	pconn := NewPostgresConn(ctx, cfg)
+	mconn := NewMinioConn(ctx, cfg)
+
+	return &Database{
+		PConn: pconn,
+		MConn: mconn,
 	}
+}
+
+func NewPostgresConn(ctx context.Context, cfg *config.Config) *pgxpool.Pool {
+	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", cfg.DB.User, cfg.DB.Password, cfg.DB.Host, cfg.DB.Port, cfg.DB.Database)
 
 	config, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
@@ -33,7 +45,19 @@ func NewDatabase() *Database {
 		return nil
 	}
 
-	return &Database{
-		Conn: pool,
+	return pool
+}
+
+func NewMinioConn(ctx context.Context, cfg *config.Config) *minio.Client {
+
+	minioClient, err := minio.New(cfg.Minio.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(cfg.Minio.AccessKey, cfg.Minio.SecretKey, ""),
+		Secure: cfg.Minio.SSL,
+	})
+	if err != nil {
+		log.Fatalln("Unable to initialize Minio Client: ", err)
+		return nil
 	}
+
+	return minioClient
 }

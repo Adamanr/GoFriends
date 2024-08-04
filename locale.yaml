@@ -8,3 +8,8 @@ database:
 chi-server:
   host: 0.0.0.0
   port: 8082
+minio:
+  endpoint: 127.0.0.1:9000
+  access-key: #
+  secret-key: #
+  useSSL: false

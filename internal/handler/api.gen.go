@@ -27,13 +27,19 @@ type InternalServiceError struct {
 
 // Post defines model for Post.
 type Post struct {
-	AuthorId   *int                  `json:"author_id,omitempty"`
-	Body       *string               `json:"body,omitempty"`
-	CreatedAt  *string               `json:"created_at,omitempty"`
-	Id         *int64                `json:"id,omitempty"`
-	ImagesList *[]openapi_types.File `json:"images_list,omitempty"`
-	Title      *string               `json:"title,omitempty"`
-	UpdatedAt  *string               `json:"updated_at,omitempty"`
+	AuthorId  *int    `json:"author_id,omitempty"`
+	Body      *string `json:"body,omitempty"`
+	CreatedAt *string `json:"created_at,omitempty"`
+	Id        *int64  `json:"id,omitempty"`
+
+	// ImagesFile Отправляет на сервер картинки в бинарном формате
+	ImagesFile *[]openapi_types.File `json:"images_file,omitempty"`
+
+	// ImagesUrl Возвращает url для получения картинок
+	ImagesUrl *[]string `json:"images_url,omitempty"`
+	Likes     *int      `json:"likes,omitempty"`
+	Title     *string   `json:"title,omitempty"`
+	UpdatedAt *string   `json:"updated_at,omitempty"`
 }
 
 // Posts defines model for Posts.
@@ -60,14 +66,32 @@ type LikePostParams struct {
 	UserId int `form:"user_id" json:"user_id"`
 }
 
+// CreatePostMultipartBody defines parameters for CreatePost.
+type CreatePostMultipartBody struct {
+	AuthorId   *string               `json:"author_id,omitempty"`
+	Body       *string               `json:"body,omitempty"`
+	ImagesFile *[]openapi_types.File `json:"images_file,omitempty"`
+	Title      *string               `json:"title,omitempty"`
+}
+
 // GetPostParams defines parameters for GetPost.
 type GetPostParams struct {
 	// Title post title params
 	Title *string `form:"title,omitempty" json:"title,omitempty"`
 }
 
-// CreatePostJSONRequestBody defines body for CreatePost for application/json ContentType.
-type CreatePostJSONRequestBody = Post
+// UpdatePostMultipartBody defines parameters for UpdatePost.
+type UpdatePostMultipartBody struct {
+	Body       *string               `json:"body,omitempty"`
+	ImagesFile *[]openapi_types.File `json:"images_file,omitempty"`
+	Title      *string               `json:"title,omitempty"`
+}
+
+// CreatePostMultipartRequestBody defines body for CreatePost for multipart/form-data ContentType.
+type CreatePostMultipartRequestBody CreatePostMultipartBody
+
+// UpdatePostMultipartRequestBody defines body for UpdatePost for multipart/form-data ContentType.
+type UpdatePostMultipartRequestBody UpdatePostMultipartBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -534,24 +558,27 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"lFYjmepYNZHp3+//FwAA//+AErHDixcAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

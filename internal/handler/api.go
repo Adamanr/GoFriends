@@ -1,7 +1,7 @@
 package api
 
 import (
-	storage "accessCloude/internal/storage"
+	"accessCloude/internal/storage"
 	"encoding/json"
 	"fmt"
 	"io"

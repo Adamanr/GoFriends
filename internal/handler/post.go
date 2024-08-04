@@ -1,14 +1,16 @@
 package api
 
 import (
-	entity "accessCloude/internal/storage/entity"
+	entity "accessCloude/internal/storage/postgres/entity"
 	"context"
+	"errors"
 	"net/http"
+	"strconv"
 )
 
 // GetPosts implements ServerInterface.
 func (ac *AccessCloude) GetPosts(w http.ResponseWriter, r *http.Request, params GetPostsParams) {
-	posts, err := entity.GetAllPosts(context.Background(), ac.DB.Conn)
+	posts, err := entity.GetAllPosts(context.Background(), ac.DB)
 	if err != nil {
 		Response(w, err.Error(), 500)
 		return
@@ -19,13 +21,37 @@ func (ac *AccessCloude) GetPosts(w http.ResponseWriter, r *http.Request, params 
 
 // CreatePost implements ServerInterface.
 func (ac *AccessCloude) CreatePost(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(20 << 30) // 10 MB
+	if err != nil {
+		http.Error(w, "The uploaded file is too big", http.StatusBadRequest)
+		return
+	}
+
 	var post entity.Post
-	if err := UnmarshalObject(r, &post); err != nil {
+
+	post.Title = r.FormValue("title")
+	post.Body = r.FormValue("body")
+
+	if post.Body == "" {
+		err := errors.New("body is empty")
 		Response(w, err.Error(), 500)
 		return
 	}
 
-	if err := post.Create(context.Background(), ac.DB.Conn); err != nil {
+	authorId, err := strconv.Atoi(r.FormValue("author_id"))
+	if err != nil {
+		Response(w, err.Error(), 500)
+		return
+	}
+
+	post.AuthorID = authorId
+
+	files := r.MultipartForm.File["images_file"]
+	for _, file := range files {
+		post.ImagesFile = append(post.ImagesFile, file)
+	}
+
+	if err := post.Create(context.Background(), ac.DB); err != nil {
 		Response(w, err.Error(), 500)
 		return
 	}
@@ -36,7 +62,7 @@ func (ac *AccessCloude) CreatePost(w http.ResponseWriter, r *http.Request) {
 // DeletePost implements ServerInterface.
 func (ac *AccessCloude) DeletePost(w http.ResponseWriter, r *http.Request, id int) {
 	var post entity.Post
-	if err := post.Delete(context.Background(), ac.DB.Conn, id); err != nil {
+	if err := post.Delete(context.Background(), ac.DB.PConn, id); err != nil {
 		Response(w, err.Error(), 500)
 		return
 	}
@@ -47,7 +73,7 @@ func (ac *AccessCloude) DeletePost(w http.ResponseWriter, r *http.Request, id in
 // GetPost implements ServerInterface.
 func (ac *AccessCloude) GetPost(w http.ResponseWriter, r *http.Request, id int, params GetPostParams) {
 	var post entity.Post
-	if err := post.Get(context.Background(), ac.DB.Conn, id); err != nil {
+	if err := post.Get(context.Background(), ac.DB, id); err != nil {
 		Response(w, err.Error(), 500)
 		return
 	}
@@ -59,7 +85,7 @@ func (ac *AccessCloude) GetPost(w http.ResponseWriter, r *http.Request, id int, 
 func (ac *AccessCloude) LikePost(w http.ResponseWriter, r *http.Request, params LikePostParams) {
 
 	var post entity.Post
-	if err := post.LikePost(context.Background(), ac.DB.Conn, params.UserId, params.PostId); err != nil {
+	if err := post.LikePost(context.Background(), ac.DB.PConn, params.UserId, params.PostId); err != nil {
 		Response(w, err.Error(), 500)
 		return
 	}
@@ -69,7 +95,7 @@ func (ac *AccessCloude) LikePost(w http.ResponseWriter, r *http.Request, params 
 
 func (ac *AccessCloude) GetLikes(w http.ResponseWriter, r *http.Request, params GetLikesParams) {
 	var post entity.Post
-	if err := post.GetLikesPost(context.Background(), ac.DB.Conn, params.PostId); err != nil {
+	if err := post.GetLikesPost(context.Background(), ac.DB.PConn, params.PostId); err != nil {
 		Response(w, err.Error(), 500)
 		return
 	}
@@ -79,13 +105,24 @@ func (ac *AccessCloude) GetLikes(w http.ResponseWriter, r *http.Request, params 
 
 // UpdatePost implements ServerInterface.
 func (ac *AccessCloude) UpdatePost(w http.ResponseWriter, r *http.Request, id int) {
-	var post entity.Post
-	if err := UnmarshalObject(r, &post); err != nil {
-		Response(w, err.Error(), 500)
+
+	err := r.ParseMultipartForm(20 << 30) // 10 MB
+	if err != nil {
+		http.Error(w, "The uploaded file is too big", http.StatusBadRequest)
 		return
 	}
 
-	if err := post.Update(context.Background(), ac.DB.Conn, id); err != nil {
+	var post entity.Post
+
+	post.Title = r.FormValue("title")
+	post.Body = r.FormValue("body")
+
+	files := r.MultipartForm.File["images_file"]
+	for _, file := range files {
+		post.ImagesFile = append(post.ImagesFile, file)
+	}
+
+	if err := post.Update(context.Background(), ac.DB, id); err != nil {
 		Response(w, err.Error(), 500)
 		return
 	}

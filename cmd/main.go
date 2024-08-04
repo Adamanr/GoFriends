@@ -11,6 +11,7 @@ import (
 
 	api "accessCloude/internal/handler"
 
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/go-chi/chi/v5"
 	middleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -32,7 +33,7 @@ func main() {
 	swagger.Servers = nil
 	r := chi.NewRouter()
 
-	db := storage.NewDatabase()
+	db := storage.NewDatabase(cfg)
 
 	accessCloude := api.NewAccessCloude(db)
 	r.Use(cors.Handler(cors.Options{
@@ -48,6 +49,8 @@ func main() {
 	api.HandlerFromMux(accessCloude, r)
 
 	h := httpmiddleware.OapiRequestValidator(swagger)(r)
+	openapi3filter.RegisterBodyDecoder("image/jpeg", openapi3filter.FileBodyDecoder)
+	openapi3filter.RegisterBodyDecoder("image/png", openapi3filter.FileBodyDecoder)
 
 	s := &http.Server{
 		Handler: h,

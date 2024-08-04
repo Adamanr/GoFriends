@@ -9,7 +9,7 @@ import (
 type Config struct {
 	DB struct {
 		Host     string `yaml:"host"`
-		Port     int    `yaml:"port"`
+		Port     string `yaml:"port"`
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`
 		Database string `yaml:"database"`
@@ -19,10 +19,16 @@ type Config struct {
 		Host string `yaml:"host"`
 		Port string `yaml:"port"`
 	} `yaml:"chi-server"`
+	Minio struct {
+		AccessKey string `yaml:"access-key"`
+		SecretKey string `yaml:"secret-key"`
+		Endpoint  string `yaml:"endpoint"`
+		SSL       bool   `yaml:"ssl"`
+	} `yaml: "minio-db"`
 }
 
 func GetConfigs() (*Config, error) {
-	file, err := os.ReadFile("/app/locale.yaml")
+	file, err := os.ReadFile("./locale.yaml")
 	if err != nil {
 		return nil, err
 	}

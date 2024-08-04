@@ -4,8 +4,8 @@ CREATE TABLE IF NOT EXISTS posts (
     id SERIAL PRIMARY KEY,
     title VARCHAR(250),
     body text,
-    user_id int NOT NULL,
-    images_id TEXT[],
+    author_id int NOT NULL,
+    images_name TEXT[],
     likes int,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP

@@ -109,6 +109,25 @@ paths:
           schema:
             type: integer
             example: 1
+      requestBody:
+        description: "Update post new post"
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: Java is the best
+                body:
+                  type: string
+                  example: Java is the best.
+                images_file:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
       responses:
         "200":
           description: Successful operation
@@ -214,9 +233,24 @@ paths:
         description: "Create new post"
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: "#/components/schemas/Post"
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: Java is the best
+                body:
+                  type: string
+                  example: Java is the best.
+                images_file:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                author_id:
+                  type: string
+                  example: 12
       responses:
         "200":
           description: Successful operation
@@ -252,11 +286,20 @@ components:
         body:
           type: string
           example: Java is the best
-        images_list:
+        images_url:
           type: array
+          description: "Возвращает url для получения картинок"
+          items:
+            type: string
+        images_file:
+          type: array
+          description: "Отправляет на сервер картинки в бинарном формате"
           items:
             type: string
             format: binary
+        likes:
+          type: integer
+          example: 0
         author_id:
           type: integer
           example: 12
